@@ -376,6 +376,11 @@ def _get_tenant_id(module, identity_client):
     else:
         tenant_name = module.params['tenant_name']
 
+    # If the user is not an admin, they cannot list all tenants. If they are
+    # updating groups in their own tenency we can avoid the need to do that.
+    if identity_client.tenant_name == tenant_name:
+        return identity_client.tenant_id
+
     tenant = _get_tenant(identity_client, tenant_name)
 
     return tenant.id
@@ -388,6 +393,7 @@ def _get_tenant(identity_client, tenant_name):
     :param tenant_name: name of the tenant.
     :return: tenant for which the name was given.
     """
+    # This requires admin permissions.
     tenants = identity_client.tenants.list()
     tenant = next((t for t in tenants if t.name == tenant_name), None)
     if not tenant:
